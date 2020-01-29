@@ -26,16 +26,10 @@ class App extends Component {
 
   //method to take the value from state.searchbox and first search the cache, if not there, use the term to query the API
     //store results in the cache as well as displaying them.
-  // handleSearch(){
-  //   let value = this.state.value;
-
-
-  //method to pull fetch image URLs and combine them with breeds data in state
+  
+  //method to pull fetch image URLs and combine them with breeds data in state for rendering
 
   render() {
-    //pull data from this.state.data and display as 
-    console.log('inside the render, this.state.breeds is', typeof this.state.breeds, this.state.breeds)
-    //destructure
     return (
       <div>
         <h1>Breeds</h1>
