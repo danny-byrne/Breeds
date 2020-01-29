@@ -21,7 +21,7 @@ class App extends Component {
   //method to handle change in input and update state
   handleChange(event) {
     this.setState({value: event.target.value});
-    // console.log(this.state)
+
   }
 
   //method to take the value from state.searchbox and first search the cache, if not there, use the term to query the API
