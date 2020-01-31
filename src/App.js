@@ -8,7 +8,8 @@ class App extends Component {
       value: '',
       breeds: [],
       images: {},
-      clicked: false
+      clicked: false,
+      toDisplay: {}
     }
     this.handleChange = this.handleChange.bind(this);
     this.pairImageRefs = this.pairImageRefs.bind(this);
@@ -18,6 +19,7 @@ class App extends Component {
     this.updateLocalStorage = this.updateLocalStorage.bind(this);
     this.getLocalStorage = this.getLocalStorage.bind(this);
     this.getMeDoggies = this.getMeDoggies.bind(this);
+    this.updateToDisplay = this.updateToDisplay.bind(this);
   }
   
 
@@ -40,9 +42,9 @@ class App extends Component {
   async fetchDoggies() {
     console.log('fetching')
     fetch('https://dog.ceo/api/breeds/list/all')
-        .then(res => res.json())
-        .then(res => this.setState({ breeds: Object.keys(res.message) }))
-        .then(() => console.log('inside fetchDoggies, this.state.breeds is', this.state.breeds))
+      .then(res => res.json())
+      .then(res => this.setState({ breeds: Object.keys(res.message) }))
+      .then(() => console.log('inside fetchDoggies, this.state.breeds is', this.state.breeds))
   }
 
   updateLocalStorage(e) {
@@ -50,12 +52,12 @@ class App extends Component {
   }
 
   getInitialStorage () {
-      let { breeds, images } = JSON.parse(localStorage.getItem('state')) 
-      this.setState({ breeds: breeds, images: images })
+    let { breeds, images } = JSON.parse(localStorage.getItem('state')) 
+    this.setState({ breeds: breeds, images: images })
   }
 
   getLocalStorage () {
-      this.setState({...JSON.parse(localStorage.getItem('state')) })
+    this.setState({...JSON.parse(localStorage.getItem('state')) })
   }  
 
   componentWillUpdate(nextProps, nextState) {
@@ -73,48 +75,48 @@ class App extends Component {
     this.setState({ clicked: false });
   }
 
-
-  // when the user want to search a breed
-  handleClick(e){
-    let { value } = this.state;
-    if(!this.state.breeds.includes(value)) {
-      alert('Doggy Not Found');
-    }
-    if(!this.state.images[value]){ 
-      this.pairImageRefs()
-        .then(() => this.setState({clicked: true}))
-    } else {
-      this.setState({ clicked: true })
-    } 
-  }
-  
-  getMeDoggies(){
-    console.log(`value is`, this.state.value.split(',').map(e => e.trim().toLowerCase()))
-    let doggies = this.state.value.split(',').map(e => e.trim());
-    console.log('doggies is', doggies)
-    doggies.forEach((e) => {
-      console.log(`in getMeDoggies e is`, e, 'type:',typeof e)
-      console.log('this.state.breeds is', this.state.breeds)
-      // if(this.state.images[e]){
-      //   console.log(`${e} pictures loaded`)
-      // } else {
-      //   console.log(`not found`)
-      // }
-      if(this.state.breeds.includes(e) && this.state.images[e]){
-        console.log(`creating a breed with ${e}`)
-        return ( <Breed images={this.state.images[e].slice(0,5)} breed={e} />)
-      } else if (this.state.breeds.includes(e) && !this.state.images[e]){
-        this.pairImageRefs(e);
-        // return this.getMeDoggies(e);
-        return ( <Breed images={this.state.images[e].slice(0,5)} breed={e} />)
-      } else {
-        return (<h1>{`${e} is not a valid doggo breed, try again`}</h1>)
+  updateToDisplay(input){
+    input.forEach((breed) => {
+      if(!this.state.toDisplay[breed]){
+        let { toDisplay } = this.state;
+        toDisplay[breed] = this.state.images[breed].slice(0,5)
+        this.setState({ toDisplay });
       }
+    })
+
+    this.state.toDisplay.forEach((e) => {
+      if(!input.includes(e)){
+        let { toDisplay } = this.state;
+        delete toDisplay[e];
+        this.setState({ toDisplay });
+      } 
     })
   }
 
-  async pairImageRefs() {
-    let breed = this.state.value;
+  // when the user want to search a breed
+  handleClick(e){
+    console.log('clicked');
+    let doggies = this.state.value.split(',').map(e => e.trim().toLowerCase());
+    let foundDoggies = [];
+    doggies.forEach((breed) => {
+      if(!this.state.breeds.includes(breed)){
+        return Error;
+      }
+      if(this.state.breeds.includes(breed) && !this.state.images[breed]){
+        this.pairImageRefs(breed);
+        foundDoggies.push(breed);
+      }
+      if(this.state.breeds.includes(breed) && this.state.images[breed] && foundDoggies.push(breed));
+    })
+    this.updateToDisplay(foundDoggies)
+  }
+  
+  getMeDoggies(){
+    
+  }
+
+  async pairImageRefs(breed) {
+    // let breed = this.state.value;
     fetch(`https://dog.ceo/api/breed/${breed}/images`)
       .then(res => res.json())
       .then(res => {
@@ -122,8 +124,8 @@ class App extends Component {
         urls[breed] = res.message;
         this.setState({ images: urls });
         console.log('updated image cache', this.state)
-        this.setState({clicked: true});
-        localStorage.setItem('state', JSON.stringify(this.state))
+        // this.setState({clicked: true});
+        this.updateLocalStorage();
       })
       .catch(err => console.log('there was an error fetching images, check input', err))
       .then(() => this.handleUnclick)
@@ -132,20 +134,30 @@ class App extends Component {
   
  
   render() {
-    // let divStyle = {
-    //   alignContent: 'flex'
-    // }
-    // let content = null;
     let urDoggies = null;
+    // if(Object.keys(this.state.toDisplay).length)
+
 
     if(this.state.clicked){
-      urDoggies = this.getMeDoggies()
+      let doggies = this.state.value.split(',').map(e => e.trim().toLowerCase());
+      urDoggies = doggies.forEach((e) => {
+        if(this.state.breeds.includes(e) && this.state.images[e]){
+          console.log(`creating a breed component with ${e}`)
+          return <Breed images={this.state.images[e].slice(0,5)} breed={e} />
+        } else if (this.state.breeds.includes(e) && !this.state.images[e]){
+          this.pairImageRefs(e);
+          return ( <Breed images={this.state.images[e].slice(0,5)} breed={e} />)
+        } else {
+          return (<h1>{`${e} is not a valid doggo breed, try again`}</h1>)
+        }
+      })
     }    
+
     return (
       <div className={classes.body} >
         <h1 className={classes.text}>Breeds</h1>
         <input className={classes.input} type = "text" placeholder='enter breed' value={this.state.value} onChange={this.handleChange} onClick={this.handleUnclick}/>
-        <button className={classes.button} onClick={this.getMeDoggies}> Click to Search </button>
+        <button className={classes.button} onClick={this.handleClick}> Click to Search </button>
         {urDoggies}
       </div>
     );
@@ -153,6 +165,7 @@ class App extends Component {
 }
 
 function Breed (props){
+    console.log('inside the breed component', props.breed, props.images)
   let { breed , images } = props;
   let i = 0;
   let gallery = null;
