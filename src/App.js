@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import classes from './App.module.css';
 
 class App extends Component {
   constructor(props) {
@@ -13,13 +14,51 @@ class App extends Component {
     this.pairImageRefs = this.pairImageRefs.bind(this);
     this.handleClick = this.handleClick.bind(this);
     this.handleUnclick = this.handleUnclick.bind(this);
+    this.fetchDoggies = this.fetchDoggies.bind(this);
+    this.updateLocalStorage = this.updateLocalStorage.bind(this);
+    this.getLocalStorage = this.getLocalStorage.bind(this);
+  }
+  
+
+  //if localStorage doesn't have state, 
+  componentDidMount() {
+    console.log('in componentDidMount, state is', this.state,'checking local storage')
+    // this.fetchDoggies();
+    //if local storage does not have state, they are at the beginning of their session and we should fetch the doggies
+    if(localStorage.getItem('state') === null ) {
+      console.log('local storage is empty, we\'re at the beginning of the session, lets fetch some doggie names')
+      this.fetchDoggies();
+      this.updateLocalStorage();
+    } else {
+      console.log('localStorage found, ')
+        this.getInitialStorage();
+    }
   }
 
-  //first get the list of breeds for us to check users input against before we make image fetch
-  componentDidMount() {
+
+  async fetchDoggies() {
+    console.log('fetching')
     fetch('https://dog.ceo/api/breeds/list/all')
-      .then(res => res.json())
-      .then(res => this.setState({ breeds: res.message }))
+        .then(res => res.json())
+        .then(res => this.setState({ breeds: Object.keys(res.message) }))
+        .then(() => console.log('inside fetchDoggies, this.state.breeds is', this.state.breeds))
+  }
+
+  updateLocalStorage(e) {
+    localStorage.setItem('state', e ? JSON.stringify(e) : JSON.stringify(this.state))
+  }
+
+  getInitialStorage () {
+      let { breeds, imageUrls } = JSON.parse(localStorage.getItem('state')) 
+      this.setState({ breeds: breeds, imageUrls: imageUrls })
+  }
+
+  getLocalStorage () {
+      this.setState({...JSON.parse(localStorage.getItem('state')) })
+  }  
+
+  componentWillUpdate(nextProps, nextState) {
+    this.updateLocalStorage(nextState)
   }
 
   //method to handle change in input 
@@ -32,16 +71,18 @@ class App extends Component {
     this.setState({ clicked: false });
   }
 
+
   //when the user want to search a breed
   handleClick(e){
     let { breeds, value } = this.state;
-    breeds = Object.keys(breeds)
-    if(!breeds.includes(value)) alert('Doggy Not Found');
+    if(!breeds.includes(value)) {
+      alert('Doggy Not Found');
+    }
     if(!this.state.imageURLs[value]){ 
       this.pairImageRefs()
         .then(() => this.setState({clicked: true}))
     } else {
-      this.setState({clicked: true})
+      this.setState({ clicked: true })
     } 
   }
 
@@ -55,26 +96,27 @@ class App extends Component {
         this.setState({ imageURLs: urls });
         console.log('updated image cache', this.state)
         this.setState({clicked: true});
+        localStorage.setItem('state', JSON.stringify(this.state))
       })
       .catch(err => console.log('there was an error fetching images, check input', err))
       .then(() => this.handleUnclick)
   }
  
   render() {
-    let divStyle = {
-      alignContent: 'flex'
-    }
-
+    // let divStyle = {
+    //   alignContent: 'flex'
+    // }
     let content = null;
+
     if(this.state.clicked){
       content = <Breed breed={this.state.value} urls={this.state.imageURLs[this.state.value]} />
     }
   
     return (
-      <div style ={divStyle} >
-        <h1>Breeds</h1>
-        <input type = "text" placeholder='enter breed' value={this.state.value} onChange={this.handleChange} onClick={this.handleUnclick}/>
-        <button onClick={this.handleClick}> Woof!</button>
+      <div className={classes.body} >
+        <h1 className={classes.text}>Breeds</h1>
+        <input className={classes.input} type = "text" placeholder='enter breed' value={this.state.value} onChange={this.handleChange} onClick={this.handleUnclick}/>
+        <button className={classes.button} onClick={this.handleClick}> Click to Search </button>
         {content}
       </div>
     );
@@ -82,34 +124,22 @@ class App extends Component {
 }
 
 function Breed(props){
-  let breedStyle = {
-    display: 'block',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    alignItems: 'center',
-    width: "70%"
-  }
 
   let { breed , urls } = props;
-  console.log('Breed, props.urls is', urls, 'array check:', Array.isArray(urls))
   let i = 0;
-  // build pictures out from urls
   let images = null;
-  if(urls){
+  if(urls){ 
     images = urls.map((e) => {
-        return ( <img style={breedStyle} key={++i} src={e} alt=''/> )
-      }
-    );
+      return ( <img className={classes.pictures} key={++i} src={e} alt=''/> )
+    });
   }
+
   return (
     <>
-      {breed}
+      <h1 style={classes.h1}>{breed}</h1>
       {images} 
     </>
   );
 }
-
-
-
 
 export default App;

@@ -1,0 +1,45 @@
+.body {
+  background: rgb(255, 196, 196);
+  align-content: flex
+}
+ 
+.text {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.input {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  align-items: center;
+  border-color: rgb(23, 168, 252);
+  border-radius: 5px
+}
+
+.button {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  align-items: center;
+  border-color: rgb(23, 168, 252);
+  border-radius: 5px
+}
+
+
+.pictures {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  align-items: center;
+  width: 70%
+}
+
+/* // This applies from 600px onwards */
+@media (min-width: 600px) {
+  .body {
+    background: green;
+  }
+}
